@@ -180,7 +180,7 @@
     <div id="webgl-container"></div>
 
     <nav>
-        <div class="logo"><a href="index5.html" class="logo">Resilient</a></div>
+        <div class="logo"><a href="index.html" class="logo">Resilient</a></div>
         
     </nav>
 
@@ -273,7 +273,7 @@
 
     <footer>
         <div>© 2026 RESILIENT LOGIC ANALYTICS</div>
-        <div>PROP_SYSTEM_BUILD_449</div>
+        
     </footer>
 
     <script>
@@ -366,7 +366,7 @@ if (!amount || amount <= 0 || amount > 100000000) {
     this.disabled = true;
 
     try {
-        const res = await fetch("http://127.0.0.1:8000/analyze", {
+        const res = await fetch("https://resilient-backend-ang5.onrender.com/analyze", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload)
@@ -407,4 +407,5 @@ if (!res.ok) {
 </script>
 
 </body>
+
 </html>
