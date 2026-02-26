@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Risk Analysis Summary | Resilient</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+    <style>
+        :root {
+            --bg: #fdfdfe;
+            --surface: #ffffff;
+            --accent: #0f172a;
+            --brand-teal: #14b8a6;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border-soft: rgba(0, 0, 0, 0.05);
+            --glass: rgba(255, 255, 255, 0.9);
+            --danger: #ef4444;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            outline: none;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text-main);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            line-height: 1.5;
+            overflow-x: hidden;
+        }
+
+        #webgl-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: radial-gradient(circle at 50% 50%, #ffffff 0%, #f1f5f9 100%);
+            pointer-events: none;
+        }
+
+        nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            padding: 1.5rem 10%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-soft);
+        }
+
+        .logo {
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            font-size: 1.5rem;
+            text-transform: uppercase;
+            color: var(--accent);
+        }
+
+        .logo a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+
+        .dashboard-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 9rem 2rem 8rem;
+            position: relative;
+            z-index: 10;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        h1 {
+            font-size: clamp(2rem, 5vw, 2.75rem);
+            letter-spacing: -1.5px;
+            font-weight: 800;
+            color: var(--accent);
+            margin-bottom: 1rem;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            max-width: 750px;
+            margin: 0 auto;
+        }
+
+        .recap-bar {
+            background: var(--accent);
+            color: white;
+            border-radius: 20px;
+            padding: 1.5rem 3rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 3rem;
+            box-shadow: 0 20px 40px rgba(15, 23, 42, 0.1);
+        }
+
+        .recap-item label {
+            display: block;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            opacity: 0.5;
+            letter-spacing: 1px;
+            margin-bottom: 0.25rem;
+        }
+
+        .recap-item span {
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .card {
+            background: var(--glass);
+            border: 1px solid var(--border-soft);
+            padding: 2.5rem;
+            border-radius: 30px;
+            backdrop-filter: blur(10px);
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(20, 184, 166, 0.3);
+        }
+
+        h2.section-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: var(--accent);
+        }
+
+        .bar-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .bar-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .bar-bg {
+            background: #f1f5f9;
+            height: 10px;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .bar-fill {
+            background: var(--brand-teal);
+            height: 100%;
+            border-radius: 5px;
+            width: 0;
+        }
+
+        .loss-highlight {
+            text-align: center;
+            padding: 1rem 0;
+        }
+
+        .loss-value {
+            font-size: 5rem;
+            font-weight: 800;
+            color: var(--danger);
+            letter-spacing: -3px;
+            line-height: 1;
+        }
+
+        .loss-label {
+            font-weight: 700;
+            color: var(--accent);
+            margin-top: 1rem;
+            display: block;
+        }
+
+        .loss-desc {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-top: 1rem;
+            line-height: 1.6;
+        }
+
+        .compare-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        .compare-card {
+            padding: 3rem;
+            border-radius: 30px;
+            border: 1px solid var(--border-soft);
+            background: var(--glass);
+        }
+
+        .compare-card.standard {
+            border-top: 6px solid var(--danger);
+        }
+
+        .compare-card.resilient {
+            border-top: 6px solid var(--brand-teal);
+        }
+
+        .compare-card h3 {
+            margin-bottom: 1.5rem;
+            font-size: 1.2rem;
+        }
+
+        .compare-card li {
+            margin-bottom: 1rem;
+            padding-left: 1.5rem;
+            position: relative;
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            list-style: none;
+        }
+
+        .compare-card li::before {
+            content: '•';
+            position: absolute;
+            left: 0;
+            color: var(--brand-teal);
+            font-weight: bold;
+        }
+
+        .standard li::before {
+            color: var(--danger);
+        }
+
+        .action-footer {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-top: 5rem;
+        }
+
+        .btn {
+            padding: 1.2rem 2.5rem;
+            border-radius: 50px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.3s;
+            font-size: 0.9rem;
+            border: none;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--accent);
+            color: var(--accent);
+        }
+
+        .btn-dark {
+            background: var(--accent);
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        footer {
+            padding: 4rem 10%;
+            display: flex;
+            justify-content: space-between;
+            border-top: 1px solid var(--border-soft);
+            color: var(--text-muted);
+            font-size: 0.7rem;
+        }
+
+        @media (max-width: 900px) {
+
+            .dashboard-grid,
+            .compare-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .recap-bar {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="webgl-container"></div>
+
+    <nav>
+        <div class="logo"><a href="#" class="logo1">Resilient</a></div>
+
+    </nav>
+
+    <main class="dashboard-container">
+        <header class="reveal">
+            <h1>Your Risk Analysis Summary</h1>
+            <p class="subtitle">Based on your profile, we simulated 10,000 market scenarios to estimate how your capital
+                behaves under extreme stress.</p>
+        </header>
+
+        <div class="recap-bar reveal">
+            <div class="recap-item">
+                <label>Investment Capital</label>
+                <span id="display-amount">$50,000</span>
+            </div>
+            <div class="recap-item">
+                <label>Risk Architecture</label>
+                <span id="display-risk">Balanced Selection</span>
+            </div>
+            <div class="recap-item">
+                <label>Cycle Duration</label>
+                <span id="display-horizon">Medium-term</span>
+            </div>
+        </div>
+
+        <div class="dashboard-grid">
+            <div class="card reveal">
+                <h2 class="section-title">Strategic Asset Allocation</h2>
+                <div class="allocation-viz">
+
+                    <div class="bar-group">
+                        <div class="bar-label">
+                            <span>US Equity (SPY)</span>
+                            <span id="spy-pct">--%</span>
+                        </div>
+                        <div class="bar-bg">
+                            <div class="bar-fill" id="spy-bar"></div>
+                        </div>
+                    </div>
+
+                    <div class="bar-group">
+                        <div class="bar-label">
+                            <span>Technology (QQQ)</span>
+                            <span id="qqq-pct">--%</span>
+                        </div>
+                        <div class="bar-bg">
+                            <div class="bar-fill" id="qqq-bar"></div>
+                        </div>
+                    </div>
+
+                    <div class="bar-group">
+                        <div class="bar-label">
+                            <span>International Equity (EFA)</span>
+                            <span id="efa-pct">--%</span>
+                        </div>
+                        <div class="bar-bg">
+                            <div class="bar-fill" id="efa-bar"></div>
+                        </div>
+                    </div>
+
+                    <div class="bar-group">
+                        <div class="bar-label">
+                            <span>Government Bonds (TLT)</span>
+                            <span id="tlt-pct">--%</span>
+                        </div>
+                        <div class="bar-bg">
+                            <div class="bar-fill" id="tlt-bar"></div>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="card reveal" style="display: flex; flex-direction: column; justify-content: center;">
+                <div class="loss-highlight">
+                    <span class="loss-value" id="worst-loss">--%</span>
+                    <span class="loss-label">Estimated Worst-Case Loss</span>
+                    <p class="loss-desc" id="loss-desc"></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="comparison-header reveal" style="text-align: center; margin: 4rem 0 2rem;">
+            <h2>Standard vs. Risk-Aware Portfolio</h2>
+        </div>
+        <div class="compare-grid">
+            <div class="compare-card standard reveal">
+                <h3 style="color: var(--danger);">Standard Portfolio</h3>
+                <ul>
+                    <li>Higher crash losses (−38% estimated)</li>
+                    <li>Concentrated risk in major indices</li>
+                    <li>Slow recovery after shocks</li>
+                </ul>
+            </div>
+            <div class="compare-card resilient reveal">
+                <h3 style="color: var(--brand-teal);">Resilient Portfolio</h3>
+                <ul>
+                    <li>Controlled severe losses (−16% estimated)</li>
+                    <li>Deeply diversified across non-correlated assets</li>
+                    <li>Designed for structural survivability</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="action-footer reveal">
+            <button class="btn btn-outline" onclick="window.location.href='profile.html'">Adjust Inputs</button>
+            <button class="btn btn-dark" onclick="alert('Analysis Saved')">Save Analysis</button>
+        </div>
+    </main>
+
+    <footer>
+        <div>© 2026 RESILIENT LOGIC ANALYTICS</div>
+        <div>REPORTING_SYSTEM_V1.1</div>
+    </footer>
+
+    <script>
+        function loadRiskResult() {
+            const result = JSON.parse(localStorage.getItem("riskResult"));
+
+            const loss = result.estimated_worst_case_loss_pct.toFixed(2);
+
+document.getElementById("loss-desc").innerText =
+    `Based on 95% CVaR Monte Carlo simulation over ${result.time_horizon_years} years, the expected extreme tail loss is approximately ${loss}%.`;
+
+            if (!result) {
+                alert("No risk analysis found. Please run analysis again.");
+                window.location.href = "profile.html";
+                return;
+            }
+
+            // ---- Top recap bar ----
+            document.getElementById("display-amount").innerText =
+                "$" + Number(result.investment_amount).toLocaleString();
+
+            document.getElementById("display-risk").innerText =
+    result.risk_profile + " Selection";
+
+            document.getElementById("display-horizon").innerText =
+                result.time_horizon_years + " Years";
+
+            // ---- Worst-case loss ----
+          // ---- Worst-case loss ----
+document.getElementById("worst-loss").innerText =
+    result.estimated_worst_case_loss_pct.toFixed(2) + "%";
+
+            // ---- Allocation bars ----
+            const allocation = result.strategic_asset_allocation;
+
+            document.getElementById("spy-pct").innerText = (allocation.SPY).toFixed(1) + "%";
+            document.getElementById("spy-bar").style.width = (allocation.SPY) + "%";
+
+            document.getElementById("qqq-pct").innerText = (allocation.QQQ).toFixed(1) + "%";
+            document.getElementById("qqq-bar").style.width = (allocation.QQQ) + "%";
+
+            document.getElementById("efa-pct").innerText = (allocation.EFA).toFixed(1) + "%";
+            document.getElementById("efa-bar").style.width = (allocation.EFA) + "%";
+
+            document.getElementById("tlt-pct").innerText = (allocation.TLT).toFixed(1) + "%";
+            document.getElementById("tlt-bar").style.width = (allocation.TLT) + "%";
+        }
+
+
+        // --- Sophisticated Stochastic Grid Animation ---
+        let scene, camera, renderer, gridPoints;
+        function init3D() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 50, 100);
+            camera.lookAt(0, 0, 0);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.getElementById('webgl-container').appendChild(renderer.domElement);
+
+            const geometry = new THREE.BufferGeometry();
+            const size = 300;
+            const divisions = 30;
+            const vertices = [];
+            for (let i = -size / 2; i <= size / 2; i += size / divisions) {
+                for (let j = -size / 2; j <= size / 2; j += size / divisions) {
+                    vertices.push(i, 0, j);
+                }
+            }
+            geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+
+            const material = new THREE.PointsMaterial({ color: 0x14b8a6, size: 0.8, transparent: true, opacity: 0.2 });
+            gridPoints = new THREE.Points(geometry, material);
+            scene.add(gridPoints);
+
+            function animate() {
+                requestAnimationFrame(animate);
+                const time = Date.now() * 0.001;
+                const pos = geometry.attributes.position;
+                for (let i = 0; i < pos.count; i++) {
+                    const x = pos.getX(i);
+                    const z = pos.getZ(i);
+                    pos.setY(i, Math.sin(x * 0.02 + time) * Math.cos(z * 0.02 + time) * 5);
+                }
+                pos.needsUpdate = true;
+                renderer.render(scene, camera);
+            }
+            animate();
+        }
+
+        window.onload = () => {
+            init3D();
+            loadRiskResult();
+            gsap.from(".reveal", { opacity: 0, y: 30, duration: 0.8, stagger: 0.15, ease: "power2.out" });
+            
+        };
+    </script>
+</body>
+
+</html>

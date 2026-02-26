@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Investor Profile | Resilient</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+    <style>
+        :root {
+            --bg: #fdfdfe;
+            --surface: #ffffff;
+            --accent: #0f172a;
+            --brand-teal: #14b8a6;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border-soft: rgba(0, 0, 0, 0.05);
+            --glass: rgba(255, 255, 255, 0.9);
+            --input-bg: #f8fafc;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; outline: none; }
+        body {
+            background-color: var(--bg);
+            color: var(--text-main);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            line-height: 1.5;
+            min-height: 100vh;
+        }
+
+        #webgl-container {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
+            background: radial-gradient(circle at 50% 50%, #ffffff 0%, #f1f5f9 100%);
+            pointer-events: none;
+        }
+
+        nav {
+            position: fixed; top: 0; width: 100%; padding: 1.5rem 10%;
+            display: flex; justify-content: space-between; align-items: center;
+            z-index: 100; backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-soft);
+        }
+        .logo { font-weight: 700; letter-spacing: -0.5px; font-size: 1.5rem; text-transform: uppercase; color: var(--accent); }
+        .logo a { text-decoration: none; color: inherit; }
+        .nav-step { font-size: 0.7rem; font-weight: 700; color: var(--brand-teal); text-transform: uppercase; letter-spacing: 1.5px; }
+
+        .profile-wrapper {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 9rem 1.5rem 4rem;
+            position: relative;
+            z-index: 10;
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            gap: 3rem;
+        }
+
+        header { grid-column: 1 / -1; text-align: center; margin-bottom: 2rem; }
+        h1 { font-size: clamp(2rem, 5vw, 2.75rem); letter-spacing: -1.5px; font-weight: 800; color: var(--accent); margin-bottom: 1rem; }
+        .subtitle { color: var(--text-muted); font-size: 1.1rem; line-height: 1.6; max-width: 700px; margin: 0 auto; }
+
+        /* Card System */
+        .input-card {
+            background: var(--glass);
+            border: 1px solid var(--border-soft);
+            padding: 2.5rem;
+            border-radius: 24px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.02);
+            margin-bottom: 1.5rem;
+            backdrop-filter: blur(10px);
+        }
+
+        label { display: block; font-weight: 700; font-size: 1rem; margin-bottom: 0.5rem; color: var(--accent); }
+        .helper { color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.5rem; display: block; }
+        .dynamic-hint { font-size: 0.85rem; color: var(--brand-teal); font-weight: 600; margin-top: 1.2rem; min-height: 1.2rem; }
+
+        /* Inputs & Interactive Elements */
+        .currency-field { position: relative; }
+        .currency-field span { position: absolute; left: 1.25rem; top: 50%; transform: translateY(-50%); font-weight: 600; color: var(--text-muted); font-size: 1.2rem; }
+        input[type="number"] {
+            width: 100%; padding: 1.25rem 1.25rem 1.25rem 2.5rem; border-radius: 12px; border: 1.5px solid var(--border-soft);
+            background: var(--input-bg); font-size: 1.25rem; font-family: inherit; font-weight: 600; transition: 0.3s;
+        }
+        input:focus { border-color: var(--brand-teal); background: #fff; box-shadow: 0 0 0 4px rgba(20, 184, 166, 0.05); }
+
+        input[type="range"] {
+            -webkit-appearance: none; width: 100%; height: 6px; border-radius: 3px; background: #e2e8f0; margin-bottom: 2rem;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none; width: 24px; height: 24px; border-radius: 50%; background: var(--brand-teal); cursor: pointer; border: 4px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        .risk-meta { display: flex; justify-content: space-between; gap: 10px; }
+        .risk-step { flex: 1; padding: 0.8rem; border-radius: 12px; border: 1.5px solid transparent; transition: 0.3s; text-align: center; }
+        .risk-step.active { background: #fff; border-color: var(--brand-teal); box-shadow: 0 4px 12px rgba(0,0,0,0.04); }
+        .risk-step h4 { font-size: 0.8rem; font-weight: 700; text-transform: uppercase; color: var(--accent); }
+
+        .horizon-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+        .horizon-btn {
+            background: var(--input-bg); border: 1.5px solid var(--border-soft); padding: 1.2rem 1rem; border-radius: 16px;
+            cursor: pointer; text-align: center; transition: 0.3s;
+        }
+        .horizon-btn.active { border-color: var(--brand-teal); background: #fff; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.05); }
+        .horizon-btn span { display: block; font-weight: 700; font-size: 0.9rem; }
+        .horizon-btn small { color: var(--text-muted); font-size: 0.7rem; }
+
+        /* Sidebar Summary */
+        .summary-sidebar { position: sticky; top: 8rem; height: fit-content; }
+        .summary-card { 
+            background: var(--accent); color: white; padding: 2.2rem; border-radius: 28px; 
+            box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25); 
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .summary-card h3 { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 2px; opacity: 0.5; margin-bottom: 1.8rem; }
+        .summary-item { margin-bottom: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.8rem; }
+        .summary-item label { color: rgba(255,255,255,0.4); font-size: 0.7rem; font-weight: 400; margin-bottom: 0.2rem; }
+        .summary-item span { display: block; font-size: 1.15rem; font-weight: 600; color: #fff; }
+
+        /* Next Steps Section */
+        .analysis-steps { grid-column: 1 / -1; margin-top: 2rem; }
+        .analysis-steps h2 { font-size: 1.4rem; font-weight: 800; margin-bottom: 2rem; text-align: center; letter-spacing: -0.5px; }
+        .steps-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
+        .step-card { background: rgba(255,255,255,0.5); border: 1px solid var(--border-soft); padding: 1.8rem; border-radius: 24px; transition: 0.3s; }
+        .step-card:hover { background: #fff; transform: translateY(-5px); }
+        .step-card h4 { color: var(--accent); margin-bottom: 0.6rem; font-size: 0.95rem; font-weight: 700; }
+        .step-card p { color: var(--text-muted); font-size: 0.8rem; line-height: 1.6; }
+
+        /* Bottom Action Area - Center Fixed */
+        .action-area {
+            grid-column: 1 / -1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 4rem 0 8rem;
+        }
+        .trust-text { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 2rem; }
+        
+        /* The Fix: Powerful CTA Button */
+        .btn-cta {
+            position: relative;
+            z-index: 20;
+            background: var(--accent);
+            color: #fff;
+            padding: 1.2rem 4rem;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            text-align: center;
+            box-shadow: 0 10px 20px rgba(15, 23, 42, 0.1);
+        }
+        .btn-cta:hover { 
+            transform: scale(1.03) translateY(-2px); 
+            background: #000;
+            box-shadow: 0 20px 40px rgba(15, 23, 42, 0.2); 
+        }
+        .btn-cta:active { transform: scale(0.98); }
+
+        footer { grid-column: 1 / -1; padding: 4rem 10%; display: flex; justify-content: space-between; border-top: 1px solid var(--border-soft); color: var(--text-muted); font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1px; }
+
+        #loader { position: fixed; inset: 0; background: #fff; z-index: 1000; display: flex; justify-content: center; align-items: center; font-weight: 800; color: var(--accent); letter-spacing: 5px; }
+
+        @media (max-width: 950px) {
+            .profile-wrapper { grid-template-columns: 1fr; padding-top: 7rem; }
+            .summary-sidebar { order: -1; position: relative; top: 0; margin-bottom: 2rem; }
+            .steps-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loader">SECURE_LINK_ESTABLISHED</div>
+    <div id="webgl-container"></div>
+
+    <nav>
+        <div class="logo"><a href="index5.html" class="logo">Resilient</a></div>
+        
+    </nav>
+
+    <main class="profile-wrapper">
+        <header class="reveal">
+            <h1>Configure Your Risk Engine</h1>
+            <p class="subtitle">Complete your investment profile to allow our quantitative engine to simulate future crash scenarios.</p>
+        </header>
+
+        <div class="inputs-column">
+            <div class="input-card reveal">
+                <label>Target Investment Capital</label>
+                <span class="helper">This amount defines the scale of our Monte Carlo simulations.</span>
+                <div class="currency-field">
+                    <span>$</span>
+                    <input type="number" id="invest-amount" placeholder="50,000" oninput="updateSummary()">
+                </div>
+            </div>
+
+            <div class="input-card reveal">
+                <label>Risk Tolerance Calibration</label>
+                <span class="helper">Determines the "Survival Threshold" during extreme market tail-events.</span>
+                <div class="slider-container">
+                    <input type="range" min="0" max="2" value="1" id="risk-range" oninput="updateSummary()">
+                    <div class="risk-meta">
+                        <div class="risk-step" id="step-0"><h4>Conservative</h4></div>
+                        <div class="risk-step active" id="step-1"><h4>Balanced</h4></div>
+                        <div class="risk-step" id="step-2"><h4>Growth</h4></div>
+                    </div>
+                </div>
+                <div id="risk-hint" class="dynamic-hint">Optimized to balance steady growth with systemic downside protection.</div>
+            </div>
+
+            <div class="input-card reveal">
+                <label>Strategic Time Horizon</label>
+                <span class="helper">The duration over which your risk-adjusted capital is measured.</span>
+                <div class="horizon-grid">
+                    <div class="horizon-btn" onclick="selectHorizon(this, 'Short-term')"><span>Short</span><small>3 Years</small></div>
+                    <div class="horizon-btn active" onclick="selectHorizon(this, 'Medium-term')"><span>Medium</span><small>5 Years</small></div>
+                    <div class="horizon-btn" onclick="selectHorizon(this, 'Long-term')"><span>Long</span><small>10 Years</small></div>
+                </div>
+                <div id="horizon-hint" class="dynamic-hint">Designed to navigate intermediate cycles and market shifts.</div>
+            </div>
+        </div>
+
+        <div>
+        <aside class="summary-sidebar reveal">
+            <div class="summary-card">
+                <h3>Live Profile Summary</h3>
+                <div class="summary-item">
+                    <label>Simulated Capital</label>
+                    <span id="sum-amount">$50,000</span>
+                </div>
+                <div class="summary-item">
+                    <label>Risk Architecture</label>
+                    <span id="sum-risk">Balanced Selection</span>
+                </div>
+                <div class="summary-item">
+                    <label>Cycle Duration</label>
+                    <span id="sum-horizon">Medium-term</span>
+                </div>
+                <p style="font-size: 0.65rem; opacity: 0.4; line-height: 1.5; font-style: italic;">Parameters are locked for initial engine calibration.</p>
+            </div>
+        </aside>
+        </div>
+
+        <section class="analysis-steps reveal">
+            <h2>The Quantitative Workflow</h2>
+            <div class="steps-grid">
+                <div class="step-card">
+                    <h4>Monte Carlo Logic</h4>
+                    <p>Executing 10,000+ stochastic iterations to identify every potential market path.</p>
+                </div>
+                <div class="step-card">
+                    <h4>Tail-Risk Mapping</h4>
+                    <p>Pinpointing the exact "Crash Threshold" where standard portfolios usually fail.</p>
+                </div>
+                <div class="step-card">
+                    <h4>Resilient Synthesis</h4>
+                    <p>Building a custom allocation focused on recovery speed and capital preservation.</p>
+                </div>
+            </div>
+        </section>
+
+        <div class="action-area reveal">
+            <p class="trust-text"><strong>Strictly Advisory:</strong> No capital will be moved or traded.</p>
+            <button class="btn-cta" id="generate-btn">Generate Risk Analysis</button>
+        </div>
+    </main>
+
+    <footer>
+        <div>© 2026 RESILIENT LOGIC ANALYTICS</div>
+        <div>PROP_SYSTEM_BUILD_449</div>
+    </footer>
+
+    <script>
+        // Data & Logic Layer
+        let selectedHorizonValue = 'Medium-term';
+        const riskHints = [
+            "Maximum defensive posture. Prioritizes capital survival during severe crashes.",
+            "Optimized to balance steady growth with systemic downside protection.",
+            "Aggressive posture. Accepts higher volatility for significant long-term upside."
+        ];
+        const horizonHints = {
+            "Short-term": "Prioritizes immediate liquidity and high-frequency risk control.",
+            "Medium-term": "Designed to navigate intermediate cycles and market shifts.",
+            "Long-term": "Absorbs short-term turbulence to capture full economic growth cycles."
+        };
+
+        function updateSummary() {
+            const amount = document.getElementById('invest-amount').value || 50000;
+            const riskIdx = document.getElementById('risk-range').value;
+            const riskLabels = ["Conservative", "Balanced", "Growth"];
+            
+            // UI Updates
+            document.getElementById('sum-amount').innerText = '$' + Number(amount).toLocaleString();
+            document.getElementById('sum-risk').innerText = riskLabels[riskIdx] + ' Selection';
+            document.getElementById('sum-horizon').innerText = selectedHorizonValue;
+            document.getElementById('risk-hint').innerText = riskHints[riskIdx];
+            
+            // Risk Slider Active State
+            document.querySelectorAll('.risk-step').forEach((s, i) => s.classList.toggle('active', i == riskIdx));
+        }
+
+        function selectHorizon(el, value) {
+            document.querySelectorAll('.horizon-btn').forEach(b => b.classList.remove('active'));
+            el.classList.add('active');
+            selectedHorizonValue = value;
+            document.getElementById('horizon-hint').innerText = horizonHints[value];
+            updateSummary();
+        }
+
+        // Three.js Core
+        let scene, camera, renderer, mesh, wireframe;
+        function init3D() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 50, 150);
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            document.getElementById('webgl-container').appendChild(renderer.domElement);
+            
+            const geometry = new THREE.IcosahedronGeometry(100, 3);
+            mesh = new THREE.Points(geometry, new THREE.PointsMaterial({ color: 0x14b8a6, size: 0.4, transparent: true, opacity: 0.12 }));
+            wireframe = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({ color: 0x14b8a6, wireframe: true, transparent: true, opacity: 0.03 }));
+            scene.add(mesh, wireframe);
+            
+            function animate() { 
+                requestAnimationFrame(animate); 
+                mesh.rotation.y += 0.0004; 
+                wireframe.rotation.y += 0.0004; 
+                renderer.render(scene, camera); 
+            }
+            animate();
+        }
+
+        // CTA Controller
+       document.getElementById('generate-btn').addEventListener('click', async function () {
+
+    let amount = Number(document.getElementById('invest-amount').value);
+
+if (!amount || amount <= 0 || amount > 100000000) {
+    alert("Please enter a valid amount between $1 and $100,000,000");
+    return;
+}
+
+    const riskIdx = Number(document.getElementById('risk-range').value);
+    const riskMap = ["Conservative", "Balanced", "Growth"];
+    const horizonMap = {
+        "Short-term": 3,
+        "Medium-term": 5,
+        "Long-term": 10
+    };
+
+    const payload = {
+        investment_amount: amount,
+        risk_level: riskMap[riskIdx],
+        time_horizon: horizonMap[selectedHorizonValue]
+    };
+
+    this.innerText = "CALIBRATING ENGINE...";
+    this.disabled = true;
+
+    try {
+        const res = await fetch("http://127.0.0.1:8000/analyze", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+});
+
+if (!res.ok) {
+    throw new Error("Backend returned error");
+}
+
+
+        const data = await res.json();
+
+        // Store result for dashboard
+        localStorage.setItem("riskResult", JSON.stringify(data));
+
+        // Go to dashboard
+        window.location.href = "dashboard.html";
+
+    } catch (err) {
+        alert("Risk engine not reachable");
+        console.error(err);
+        this.innerText = "Generate Risk Analysis";
+        this.disabled = false;
+    }
+});
+    </script>
+    <script>
+    // Hide loader after page load
+    window.addEventListener("load", () => {
+        const loader = document.getElementById("loader");
+        gsap.to(loader, {
+            opacity: 0,
+            duration: 0.6,
+            ease: "power2.out",
+            onComplete: () => loader.style.display = "none"
+        });
+    });
+</script>
+
+</body>
+</html>
