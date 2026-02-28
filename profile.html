@@ -366,7 +366,7 @@ if (!amount || amount <= 0 || amount > 100000000) {
     this.disabled = true;
 
     try {
-        const res = await fetch("https://resilient-backend-ang5.onrender.com/analyze", {
+        const res = await fetch("resilient-backend-production.up.railway.app/analyze", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload)
@@ -409,6 +409,7 @@ if (!res.ok) {
 </body>
 
 </html>
+
 
 
 
